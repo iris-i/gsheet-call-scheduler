@@ -1,0 +1,75 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <base target="_top">
+        <style>
+        button {
+          margin: 5px 0;
+          width: 100%;
+        }
+        </style>
+    </head>
+    <body>
+        <h3>Select Calendar and Load Events</h3>
+        <div>
+            <label for="calendarSelect">Choose a calendar:</label>
+            <select id="calendarSelect" onchange="loadEvents()"></select>
+        </div>
+        <div id="eventList"></div>
+        <script>
+        function loadCalendars() {
+          google.script.run.withSuccessHandler(populateCalendarSelect).getCalendars();
+        }
+
+        function populateCalendarSelect(calendars) {
+          var calendarSelect = document.getElementById('calendarSelect');
+          calendarSelect.innerHTML = ''; // Clear previous options
+
+          calendars.forEach(function(calendar) {
+            var option = document.createElement('option');
+            option.value = calendar.id;
+            option.textContent = calendar.name;
+            calendarSelect.appendChild(option);
+          });
+        }
+
+        function loadEvents() {
+          var calendarId = document.getElementById('calendarSelect').value;
+          console.log("Calendar ID selected:", calendarId);
+          if (calendarId) {
+            google.script.run.withSuccessHandler(displayEvents).getEvents(calendarId);
+          }
+        }
+
+        function displayEvents(response) {
+        console.log("Response received from server:", response);
+        let events = response;
+        let eventListDiv = document.getElementById('eventList');
+
+        eventListDiv.innerHTML = ''; // Clear the list before displaying new events
+
+          if (events) {
+            if (Array.isArray(events) && events.length > 0) {
+            events.forEach(function(event) {
+              let eventButton = document.createElement('button');
+              eventButton.textContent = event.title + ' (' + new Date(event.startTime).toLocaleString() + ' - ' + new Date(event.endTime).toLocaleString() + ')';
+
+              eventButton.onclick = function() {
+                console.log("This event's ID is: ", event.id);
+                google.script.run.addEventToCells(event.id, event.title, event.date, event.startTime, event.endTime);
+              };
+
+              eventListDiv.appendChild(eventButton);
+            });
+            }
+        } else {
+          // Show a message if no events were found
+          eventListDiv.textContent = 'No events found.';
+        }
+      }
+
+      // Load calendars when the sidebar is opened
+      loadCalendars();
+        </script>
+    </body>
+</html>
